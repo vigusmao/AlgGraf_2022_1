@@ -1,28 +1,26 @@
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
- * Classe para grafos simples, não-direcionados.
- * Utiliza HashSets de vizinhos, para cada vértice.
+ * Classe para grafos simples, direcionados.
+ * Utiliza HashSets de vizinhos de saída e de entrada,
+ * para cada vértice.
  * Vértices são inteiros de 1 a n.
  */
 public class Grafo {
 
-    private List<Set<Integer>> vizinhosPorVertice;
+    private Map<Integer, Set<Integer>> vizinhosDeSaidaPorVertice;
+    private Map<Integer, Set<Integer>> vizinhosDeEntradaPorVertice;
 
-    private int quantVertices;
     private int quantArestas;
 
+
     public Grafo(int n) {
-        this.quantVertices = n;
-        this.vizinhosPorVertice = new ArrayList<>(n + 1);
+        this.vizinhosDeSaidaPorVertice = new HashMap<>();
+        this.vizinhosDeEntradaPorVertice = new HashMap<>();
 
-        this.vizinhosPorVertice.add(null);  // posição 0 ficará nula
-
-        for (int i = 1; i <= n; i++) {
-            this.vizinhosPorVertice.add(new HashSet<>());
+        for (int v = 1; v <= n; v++) {
+            this.vizinhosDeSaidaPorVertice.put(v, new HashSet<>());
+            this.vizinhosDeEntradaPorVertice.put(v, new HashSet<>());
         }
 
     }
@@ -31,27 +29,78 @@ public class Grafo {
 
     }
 
+    public void removerVertice(int v) {
+        for (int w : this.vizinhosDeSaidaPorVertice.get(v)) {
+            this.vizinhosDeEntradaPorVertice.get(w).remove(v);
+        }
+        for (int w : this.vizinhosDeEntradaPorVertice.get(v)) {
+            this.vizinhosDeSaidaPorVertice.get(w).remove(v);
+        }
+        this.quantArestas -=
+                this.vizinhosDeEntradaPorVertice.get(v).size();
+        this.quantArestas -=
+                this.vizinhosDeSaidaPorVertice.get(v).size();
+
+        this.vizinhosDeEntradaPorVertice.set(v, null);
+        this.vizinhosDeSaidaPorVertice.set(v, null);
+
+        this.quantVertices--;
+    }
+
     public boolean existeAresta(int v, int w) {
-        return this.vizinhosPorVertice.get(v).contains(w);
+        return this.vizinhosDeSaidaPorVertice.get(v).contains(w);
     }
 
     public void adicionarAresta(int v, int w) {
-        this.vizinhosPorVertice.get(v).add(w);
-        this.vizinhosPorVertice.get(w).add(v);
-        this.quantArestas++;
+        if (this.vizinhosDeSaidaPorVertice.get(v).add(w)) {
+            this.vizinhosDeEntradaPorVertice.get(w).add(v);
+            this.quantArestas++;
+        }
     }
 
     public void removerAresta(int v, int w) {
-        this.vizinhosPorVertice.get(v).remove(w);
-        this.vizinhosPorVertice.get(w).remove(v);
-        this.quantArestas--;
+        if (this.vizinhosDeSaidaPorVertice.get(v).remove(w)) {
+            this.vizinhosDeEntradaPorVertice.get(w).remove(v);
+            this.quantArestas--;
+        }
     }
 
     public int obterGrau(int v) {
-        return this.vizinhosPorVertice.get(v).size();
+        return this.vizinhosDeSaidaPorVertice.get(v).size();
     }
 
     public int getQuantArestas() {
         return this.quantArestas;
+    }
+
+    public List<Integer> getTopologicalSort() {
+        int n = vertices.size();
+
+        List<Integer> topSort = new ArrayList<>();
+
+        Stack<Integer> fontes = new Stack<>();
+        for (int v : vertices) {
+            if (this.vizinhosDeEntradaPorVertice.get(v).size() == 0) {
+                fontes.push(v);
+            }
+        }
+
+        while (fontes.size() > 0) {
+            int f = fontes.pop();
+            topSort.add(f);
+            for (int w : this.vizinhosDeSaidaPorVertice.get(f)) {
+                if (this.vizinhosDeEntradaPorVertice.get(w).size() == 1) {
+                    // w vai se tornar uma fteon quando remover f
+                    fontes.add(w);
+                }
+            }
+            removerVertice(f);
+        }
+
+        if (topSort.size() == n) {
+            return topSort;
+        }
+
+        return null;  // não é um DAG!!!
     }
 }
