@@ -11,18 +11,18 @@ public class Grafo {
     private Map<Integer, Set<Integer>> vizinhosDeSaidaPorVertice;
     private Map<Integer, Set<Integer>> vizinhosDeEntradaPorVertice;
 
+    private int quantVertices;
     private int quantArestas;
 
-
     public Grafo(int n) {
+        this.quantVertices = n;
         this.vizinhosDeSaidaPorVertice = new HashMap<>();
         this.vizinhosDeEntradaPorVertice = new HashMap<>();
 
-        for (int v = 1; v <= n; v++) {
-            this.vizinhosDeSaidaPorVertice.put(v, new HashSet<>());
-            this.vizinhosDeEntradaPorVertice.put(v, new HashSet<>());
+        for (int i = 1; i <= n; i++) {
+            this.vizinhosDeSaidaPorVertice.put(i, new HashSet<>());
+            this.vizinhosDeEntradaPorVertice.put(i, new HashSet<>());
         }
-
     }
 
     public void adicionarVertice() {
@@ -40,10 +40,8 @@ public class Grafo {
                 this.vizinhosDeEntradaPorVertice.get(v).size();
         this.quantArestas -=
                 this.vizinhosDeSaidaPorVertice.get(v).size();
-
-        this.vizinhosDeEntradaPorVertice.set(v, null);
-        this.vizinhosDeSaidaPorVertice.set(v, null);
-
+        this.vizinhosDeEntradaPorVertice.remove(v);
+        this.vizinhosDeSaidaPorVertice.remove(v);
         this.quantVertices--;
     }
 
@@ -69,17 +67,40 @@ public class Grafo {
         return this.vizinhosDeSaidaPorVertice.get(v).size();
     }
 
+    public int getQuantVertices() {
+        return this.quantVertices;
+    }
+
     public int getQuantArestas() {
         return this.quantArestas;
     }
 
+    public List<Integer> getVertices() {
+        return new ArrayList<>(this.vizinhosDeEntradaPorVertice.keySet());
+    }
+
+    public Set<Integer> getVizinhosDeEntrada(int v) {
+        return this.vizinhosDeEntradaPorVertice.get(v);
+    }
+
+    public Set<Integer> getVizinhosDeSaida(int v) {
+        return this.vizinhosDeSaidaPorVertice.get(v);
+    }
+
+    public Set<Integer> getVizinhos(int v) {
+        Set<Integer> vizinhos = new HashSet<>();
+        vizinhos.addAll(getVizinhosDeEntrada(v));
+        vizinhos.addAll(getVizinhosDeSaida(v));
+        return vizinhos;
+    }
+
     public List<Integer> getTopologicalSort() {
-        int n = vertices.size();
+        int n = quantVertices;
 
         List<Integer> topSort = new ArrayList<>();
 
         Stack<Integer> fontes = new Stack<>();
-        for (int v : vertices) {
+        for (Integer v : this.vizinhosDeEntradaPorVertice.keySet()) {
             if (this.vizinhosDeEntradaPorVertice.get(v).size() == 0) {
                 fontes.push(v);
             }
@@ -90,7 +111,7 @@ public class Grafo {
             topSort.add(f);
             for (int w : this.vizinhosDeSaidaPorVertice.get(f)) {
                 if (this.vizinhosDeEntradaPorVertice.get(w).size() == 1) {
-                    // w vai se tornar uma fteon quando remover f
+                    // w vai se tornar uma fonte quando remover f
                     fontes.add(w);
                 }
             }
